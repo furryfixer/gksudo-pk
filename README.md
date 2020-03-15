@@ -1,19 +1,18 @@
 # gksudo-pk
 A drop-in replacement for gksudo, with fewer options. For X11 only. PKEXEC is used to launch graphical programs. Sudo and Zenity are rquired dependencies. This bash script is NOT SECURE by modern standards. Use is never recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. Use at YOUR OWN RISK. Hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
-NO_PASSWD_LIST: These programs may be run without password authentication.
-
-NEVER_AUTH_LIST: These programs are prohibited entirely from running.
+-NO_PASSWD_LIST: These programs may be run without password authentication.
+-NEVER_AUTH_LIST: These programs are prohibited entirely from running.
 
 All other progams will be subject to default polkit/pkexec rules. THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED. Only one polkit action/rule pair is needed.
 
-# Dependencies
+## Dependencies
 bash, sudo, zenity
 
-# Options
+## Options
 Only the -u |--user options are actually used.  All other options accepted by the original gksudo are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
 
-# Details
+## Details
 The script MUST be invoked by the user owning the current Xsession, or it will fail (it would be unusual for this not to be the case).
 gksudo-pk allows running a program as ANY STANDARD USER, as well as root.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
 
@@ -22,14 +21,14 @@ A first key feature of gksudo-pk is the creation of a proper environment for pke
 A second important feature is the placement of the environment within one of two temporary executable scripts, PASSWD-ENV or NOPASSWD-ENV. Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, leseer, (or greater, with modifications) polkit akuthorization, all by changing 1 or 2 strings within the gksudo-pk script.
 The invoking user will be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
 
-# Applicability
+## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
 XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
 
-# Logging
+## Logging
 gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails.
 
-# Installation
+## Installation
 It is not difficult to install this script, but there are no plans to "package" it.  As convenient as gksudo-pk may be, it is a security risk, so some manual work is needed to discourage the unwary! To install, clone or download the files. Modify the following if your polkit folders are located differently for your distribution. Fron the download directory,
 do the following as root:
 
