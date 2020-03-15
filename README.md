@@ -15,7 +15,7 @@ Only the -u|--user options are actually used.  All other gksudo options are look
 
 # Details
 The script MUST be invoked by the user owning the current Xsession, or it will fail (it would be unusual for this not to be the case).
-gksuo-pk allows running a program as ANY STANDARD USER, as well as root.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
+gksudo-pk allows running a program as ANY STANDARD USER, as well as root.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
 
 A first key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  /etc/environment is sourced, and Xauthority and Display variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one used by pkexec by default, it is still minimal compared to that of a regular user.  Importantly, a polkit "org.freedesktop.policykit.exec.allow_gui" annotation is NOT required.
 
