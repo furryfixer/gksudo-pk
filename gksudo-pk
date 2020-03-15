@@ -7,10 +7,8 @@
 #
 # This script by William Rueger (furryfixer) designed to replace deprecated
 # "gksu" and gksudo". It is DANGEROUS and NOT SECURE by modern standards.
-# Use is never recommended with ssh or unless behind a firewall. Zenity is 
-# a required dependency to warn X display owner. This template is usable in
-# multiple Desktop environments.  Pkexec is now used since sudo fails in Plasma-5.
-#
+# Use is never recommended with ssh or unless behind a firewall. 
+# Pkexec is now used since sudo fails in Plasma-5.
 # SIMPLIFIED GKSUDO OPTIONS.  Only "-u|--user" option accepted. If any other
 # command-line options designed for the original gksudo are encountered
 # (preceded by "-" or "--") they WILL BE IGNORED. "-" or "--" options are
