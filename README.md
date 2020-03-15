@@ -22,5 +22,9 @@ A first key feature of gksudo-pk is the creation of a proper environment for pke
 A second important feature is the placement of the environment within one of two temporary executable scripts, PASSWD-ENV or NOPASSWD-ENV. Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, leseer, (or greater, with modifications) polkit akuthorization, all by changing 1 or 2 strings within the gksudo-pk script.
 The invoking user will be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
 
+# Applicability
+gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
+XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
+
 # Logging
 gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. 
