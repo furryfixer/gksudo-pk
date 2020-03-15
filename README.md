@@ -1,8 +1,8 @@
 # gksudo-pk
 A drop-in replacement for gksudo, with fewer options. For X11 only. PKEXEC is used to launch graphical programs. Sudo and Zenity are rquired dependencies. This bash script is NOT SECURE by modern standards. Use is never recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. Use at YOUR OWN RISK. Hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
--NO_PASSWD_LIST: These programs may be run without password authentication.
--NEVER_AUTH_LIST: These programs are prohibited entirely from running.
+- NO_PASSWD_LIST: These programs may be run without password authentication.
+- NEVER_AUTH_LIST: These programs are prohibited entirely from running.
 
 All other progams will be subject to default polkit/pkexec rules. THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED. Only one polkit action/rule pair is needed.
 
@@ -32,11 +32,11 @@ gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This ma
 It is not difficult to install this script, but there are no plans to "package" it.  As convenient as gksudo-pk may be, it is a security risk, so some manual work is needed to discourage the unwary! To install, clone or download the files. Modify the following if your polkit folders are located differently for your distribution. Fron the download directory,
 do the following as root:
 
-cp 	gksudo.pk*-env.policy /usr/share/polkit-1/actions/
-cp 49-gksudo-pk-nopasswd-env.rules /etc/polkit-1/rules.d/
-cp gksudo-pk /usr/local/bin/
-chmod 0711 /usr/local/bin/gksudo-pk
-ln -s /usr/local/bin/gksudo-pk /usr/bin/gksudo  # recommended to call with "gksudo"
-ln -s /usr/local/bin/gksudo-pk /usr/bin/gksu    # optional, not recommended
+- cp 	gksudo.pk*-env.policy /usr/share/polkit-1/actions/
+- cp 49-gksudo-pk-nopasswd-env.rules /etc/polkit-1/rules.d/
+- cp gksudo-pk /usr/local/bin/
+- chmod 0711 /usr/local/bin/gksudo-pk
+- ln -s /usr/local/bin/gksudo-pk /usr/bin/gksudo  # recommended to call with "gksudo"
+- ln -s /usr/local/bin/gksudo-pk /usr/bin/gksu    # optional, not recommended
  
 
