@@ -19,7 +19,7 @@ The script MUST be invoked by the user owning the current Xsession (it would be 
 A first key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority** and **Display** variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one used by pkexec by default, it is still minimal compared to that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui" annotation is NOT required.**
 
 A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/passwd-env**" or "**/tmp/nopasswd-env**". Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit akuthorization, all by changing 1 or 2 strings within the gksudo-pk script.
-The invoking user will be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
+The invoking user may (at least initially) be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
 
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
