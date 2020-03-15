@@ -1,0 +1,128 @@
+#! /bin/bash
+###############################################################################
+# GKSUDO-PK (drop-in replacement for gksudo, gksu) with pkexec, for X11
+#            GPLv3 license, by William Rueger (furryfixer) 
+# Requires: Zenity and sudo are dependencies.
+#           $ADMIN_GRP defaults to "wheel". Only group members may run.
+#
+# This script by William Rueger (furryfixer) designed to replace deprecated
+# "gksu" and gksudo". It is DANGEROUS and NOT SECURE by modern standards.
+# Use is never recommended with ssh or unless behind a firewall. Zenity is 
+# a required dependency to warn X display owner. This template is usable in
+# multiple Desktop environments.  Pkexec is now used since sudo fails in Plasma-5.
+#
+# SIMPLIFIED GKSUDO OPTIONS.  Only "-u|--user" option accepted. If any other
+# command-line options designed for the original gksudo are encountered
+# (preceded by "-" or "--") they WILL BE IGNORED. "-" or "--" options are
+# stripped until a non-dash field encountered, at which all remaining fields,
+# including trailing "-" options, are passed on to pkexec as a command to execute.
+#
+# One of two temporary helper scripts, "/tmp/nopasswd-env" or "/tmp/password-env"
+# is generated each time gksudo-pk is invoked. A polkit rule is anticipated which
+# bypasses password requirement for the $ADMIN_GRP if "no-passwd-env" used, instead
+# of "passwd-env". THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS
+# THEREFORE ELIMINATED. The administrator may simply choose SPECIFIC PROGRAMS
+# WHICH $ADMIN_GRP CAN USE WITHOUT PASSWORD, as well as SPECIFIC PROGRAMS that WILL
+# NEVER BE AUTHORIZED for gksudo-pk. Add to, or modify "NO_PASSWDLIST" and
+# "NEVER_AUTH_LIST" below to include desired programs. Full pathnames need not be
+# included. "|" bars in NOPASSWDLIST or NEVER_AUTH_LIST are just for legibility
+# and will be ignored.
+#
+# To revert to default polkit rules, but allow gui access, simply empty
+# or comment out NOPASSWD_LIST below
+##=================================================================================##
+
+NOPASSWD_LIST="mousepad | leafpad | thunar | pcmanfm | pcmanfm-qt | dolphin | caja | pluma"
+
+NEVER_AUTH_LIST=""
+
+##=================================================================================##
+
+LOGGING="true"     # Will require sudo password
+ADMIN_GRP="wheel"  # Choose one preferred admin or superuser group allowed to run this
+
+if ! id -nG $USER | grep -q "$ADMIN_GRP"; then
+    zenity --warning --title="gksudo-pk Error" --text="STOP! gksudo-pk may only be invoked by\n members of ${ADMIN_GRP} group" --no-wrap
+	exit 1
+fi
+echo '#!/bin/bash
+zenity --password --title="sudo to chown or log entries"' > /tmp/zenity-sudo-passwd
+chmod +x /tmp/zenity-sudo-passwd
+export SUDO_ASKPASS="/tmp/zenity-sudo-passwd"
+xauth_gksudo=$(mktemp /tmp/.gk.XXXXXXX)
+cat ~/.Xauthority > $xauth_gksudo    # XAUTHORITY borrowed from calling user owning X display
+chmod 0644 $xauth_gksudo
+as_user="root"
+
+while :   # Deal with legacy gksudo options, all but --user|-u are stripped/ignored
+do
+	case "$1" in
+	-u | --user)            # Pass the following username to pkexec
+		as_user=$2
+		shift 2
+		;;
+	-m | --message | -D | --description)   # Only other gksudo options which used 2nd following field?
+		shift 2
+		;;
+	
+	-* | --*)                # All other options only 1 shift needed to erase
+		shift
+		;; 
+	*)			# Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
+		break
+		;;	
+	esac
+done
+	
+if [[ $# -lt 1 ]]; then
+	zenity --warning --title="gksudo-pk Error" --text="STOP! Improper syntax or missing arguments" --no-wrap
+	exit 1
+fi	
+#   Our new $1 should be the command to pass to pkexec, but first we need to 
+#   compare with commands in $NEVER_AUTH_LIST and $NOPASSWORD_LIST above. We must strip full path
+#   if present only for the purpose of this comparison.  		
+no_full_pathname=${1##*/}       # Strips  /usr/bin/.../  prefixes
+if [[ "$NEVER_AUTH_LIST" == *"$no_full_pathname"* ]]; then
+	zenity --warning --title="gksudo-pk Error" --text="gksudo-pk execution of $1 is\n prevented by local policy!" --no-wrap
+	exit 1
+fi
+zenity --warning --text=" gksudo-pk invoked allowing \""$as_user"\"\n access to this X11 display!" --no-wrap
+[ ! -e /tmp/runtime-gksudo-$as_user ] &&  mkdir -m0700 /tmp/runtime-gksudo-${as_user}
+sudo -A chown ${as_user} /tmp/runtime-gksudo-${as_user}
+newhome=$(eval echo "~${as_user}")
+if [[ "$as_user" == "root" ]] && [[ "$NOPASSWD_LIST" == *"$no_full_pathname"* ]]; then	
+	echo "#!/bin/bash
+	set -a
+	. /etc/environment
+	DISPLAY=\":0\"
+	XAUTHORITY=${xauth_gksudo}
+	XDG_RUNTIME_DIR=/tmp/runtime-gksudo-${as_user}
+	XDG_CONFIG_HOME=${newhome}/.config
+	KDE_SESSION_VERSION=5
+	KDE_FULL_SESSION=true
+	\$@" > /tmp/nopasswd-env
+	passwdkey_script=/tmp/nopasswd-env
+else
+    echo "#!/bin/bash
+	set -a
+	. /etc/environment
+	DISPLAY=\":0\"
+	XAUTHORITY=${xauth_gksudo}
+	XDG_RUNTIME_DIR=/tmp/runtime-gksudo-${as_user}
+	XDG_CONFIG_HOME=${newhome}/.config
+	KDE_SESSION_VERSION=5
+	KDE_FULL_SESSION=true
+	\$@" > /tmp/passwd-env
+	passwdkey_script=/tmp/passwd-env
+fi
+chmod 0777 $passwdkey_script
+if $LOGGING ; then
+	timestamp=`date +%D" "%H:%M:%S`
+	sudo -A bash -c "echo \"${timestamp}.  User <${USER}> ran <${@}> as user <${as_user}>\" >> /var/log/gksudo-pk.log"
+fi
+
+pkexec --user $as_user $passwdkey_script $@
+
+rm $passwdkey_script
+rm $xauth_gksudo
+exit 0
