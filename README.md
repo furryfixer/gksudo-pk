@@ -11,7 +11,7 @@ All other progams will be subject to default polkit/pkexec rules. THE NEED FOR A
 bash, sudo, zenity
 
 # Options
-Only the -u|--user options are actually used.  All other gksudo options are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
+Only the -u |--user options are actually used.  All other options accepted by the original gksudo are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
 
 # Details
 The script MUST be invoked by the user owning the current Xsession, or it will fail (it would be unusual for this not to be the case).
