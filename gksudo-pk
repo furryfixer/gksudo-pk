@@ -4,11 +4,10 @@
 #            GPLv3 license, by William Rueger (furryfixer) 
 # Requires: Zenity and sudo are dependencies.
 #           $ADMIN_GRP defaults to "wheel". Only group members may run.
-#
-# This script by William Rueger (furryfixer) designed to replace deprecated
-# "gksu" and gksudo". It is DANGEROUS and NOT SECURE by modern standards.
-# Use is never recommended with ssh or unless behind a firewall. 
-# Pkexec is now used since sudo fails in Plasma-5.
+# This script is designed to replace deprecated "gksu" and gksudo". It is
+# VULNERABLE and NOT SECURE by modern standards.  Use is never recommended
+# with ssh or unless behind a firewall. Pkexec is now used since sudo often
+# fails in Plasma-5.
 # SIMPLIFIED GKSUDO OPTIONS.  Only "-u|--user" option accepted. If any other
 # command-line options designed for the original gksudo are encountered
 # (preceded by "-" or "--") they WILL BE IGNORED. "-" or "--" options are
