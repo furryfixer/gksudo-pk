@@ -27,4 +27,17 @@ gksudo-pk is designed to be fairly universal, but has not been extensively teste
 XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
 
 # Logging
-gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. 
+gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails.
+
+# Installation
+It is not difficult to install this script, but there are no plans to "package" it.  As convenient as gksudo-pk may be, it is a security risk, so some manual work is needed to discourage the unwary! To install, clone or download the files. Modify the following if your polkit folders are located differently for your distribution. Fron the download directory,
+do the following as root:
+
+cp 	gksudo.pk*-env.policy /usr/share/polkit-1/actions/
+cp 49-gksudo-pk-nopasswd-env.rules /etc/polkit-1/rules.d/
+cp gksudo-pk /usr/local/bin/
+chmod 0711 /usr/local/bin/gksudo-pk
+ln -s /usr/local/bin/gksudo-pk /usr/bin/gksudo  # recommended to call with "gksudo"
+ln -s /usr/local/bin/gksudo-pk /usr/bin/gksu    # optional, not recommended
+ 
+
