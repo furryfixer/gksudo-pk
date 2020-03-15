@@ -35,7 +35,7 @@ do the following as root:
 - cp 	gksudo.pk*-env.policy /usr/share/polkit-1/actions/
 - cp 49-gksudo-pk-nopasswd-env.rules /etc/polkit-1/rules.d/
 - cp gksudo-pk /usr/local/bin/
-- chmod 0711 /usr/local/bin/gksudo-pk
+- chmod 0755 /usr/local/bin/gksudo-pk
 - ln -s /usr/local/bin/gksudo-pk /usr/bin/gksudo  # recommended to call with "gksudo"
 - ln -s /usr/local/bin/gksudo-pk /usr/bin/gksu    # optional, not recommended
  
