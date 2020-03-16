@@ -39,4 +39,4 @@ It is not difficult to install this script, but there are no plans to "package" 
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # optional, not recommended
  
 ## Notes
-Mostly for Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" warnings abound, but usually no functional errors occur. Gksudo-pk tries to create and assign temporary $XDG_RUNTIME_DIR directories to cut down on this, with partial success. Another common warning complains about "inability to register with accesibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. 
+Mostly for Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" warnings abound, but usually no functional errors occur. Gksudo-pk tries to create and assign temporary $XDG_RUNTIME_DIR directories to cut down on this, with partial success. Another common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. 
