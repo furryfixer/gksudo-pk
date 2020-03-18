@@ -1,5 +1,5 @@
 # gksudo-pk
-A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs. **Sudo** and **Zenity** are required dependencies. This bash script is NOT SECURE by modern standards. Use is not recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
+A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards. Use is not recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NO_PASSWD_LIST: These programs may be run without password authentication.**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from running.**
