@@ -38,6 +38,6 @@ It is not difficult to install this script, but there are no plans to "package" 
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # optional, not recommended
  
 ## Notes
-A common warning in complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
+A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
 
 At least some marginal security is achieved by restricting write access to the log, but this, and the creation of XDG runtime directories, requires sudo, and some password prompts that this script otherwise could be configured to avoid.  This is not an issue for $ADMIN_GRP users (wheel by default), if the group or individual has a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d.  This avoids double authentication dialogs.  Again, assess your risk.
