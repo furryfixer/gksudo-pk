@@ -1,5 +1,5 @@
 # gksudo-pk
-A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards. Use is not recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
+A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards. Use is not recommended with ssh or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. Works in many systemd (Arch) and non-systemd (Void) systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NO_PASSWD_LIST: These programs may be run without password authentication.**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from running.**
@@ -13,7 +13,7 @@ All other progams will be subject to default polkit/pkexec rules. **THE NEED FOR
 Only the **--user | -u** options are actually used.  All other options accepted by the original **gksudo** are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
 
 ## Details
-The script MUST be invoked by the user owning the current Xsession (it would be unusual for this not to be the case), or it will fail with X-related errors. The invoking user also MUST be a member of $ADMIN_GRP, which defaults to **"wheel"**.
+The script is best invoked by the user owning the current Xsession (it would be unusual for this not to be the case), or it could fail with X-related errors. The invoking user also MUST be a member of $ADMIN_GRP, which defaults to **"wheel"**.
 **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
 
 A first key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority** and **Display** variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one used by pkexec by default, it is still minimal compared to that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui" annotation is NOT required.**
