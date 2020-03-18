@@ -26,7 +26,7 @@ gksudo-pk is designed to be fairly universal, but has not been extensively teste
 XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
 
 ## Logging
-gksudo-pk by default will create it's own log at /var/log/gksudo-pk.log. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails.
+gksudo-pk by default will create it's own log at **/var/log/gksudo-pk.log**. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. Only root may write to the log, so sudo password will be required occasionally.
 
 ## Installation
 It is not difficult to install this script, but there are no plans to "package" it.  As convenient as gksudo-pk may be, it is a security risk, so some manual work is needed to discourage the unwary! To install, install sudo and zenity, then clone or download the files. Modify the following if your polkit folders are located differently for your distribution.  Ensure that $PATH includes /usr/local/bin, unless placing the links in /bin or /usr/bin instead. Fron the download directory, do the following as root:
@@ -39,4 +39,6 @@ It is not difficult to install this script, but there are no plans to "package" 
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # optional, not recommended
  
 ## Notes
-Mostly for Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" warnings abound, but usually no functional errors occur. Gksudo-pk tries to create and assign temporary $XDG_RUNTIME_DIR directories to cut down on this, with partial success. Another common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. 
+A common warning in complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
+
+At least some marginal security is achieved by restricting write access to the log, but this, and the creation of XDG runtime directories, requires sudo, and some password prompts that this script otherwise could be configured to avoid.  This is not an issue for $ADMIN_GRP users (wheel by default), if the group or individual has a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d.  Again, assess your risk.  By commenting out or removing $XDG_RUNTIME_DIR references, and setting $LOGGING to "false", sudo authorization is avoided, and only polkit/pkexec authorization comes into play.
