@@ -8,7 +8,7 @@
   <icon_name>system-file-manager</icon_name>
 
   <action id="gksudo.pk.nopasswd.env">
-    <description>Allow rule for gksudo-pk(pkexec nopasswd-env)</description>
+    <description>Allow rule for gksudo-pk(pkexec /tmp/nopasswd-env)</description>
     <message>Authentication is required to run gksudo-pk with this environment</message>
     <defaults>
       <allow_any>no</allow_any>
