@@ -6,7 +6,7 @@ A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec
 - **NOPASSWD_LIST: These programs may be run without password authentication.**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from running.**
 
-**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, default polkit rules for pkexec will be used for all authorized programs.
+**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one new polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, default polkit rules for pkexec will be used for all authorized programs.
 
 ## Dependencies
 **bash, sudo, zenity**
