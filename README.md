@@ -16,6 +16,10 @@ A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec
 ## Options
 Only the **--user | -u** options are actually used, and as with sudo, may be omitted for "**-u root**".  All other options accepted by the original **gksudo** are looked for and stripped.  The remaining arguments are then passed to pkexec with an environment (see below)
 
+## Applicability
+gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
+**XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested.
+
 ## Details
 The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if **$Use_Sudo=true** is set in the script.  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
 
@@ -24,14 +28,10 @@ An important key feature of gksudo-pk is the creation of a proper environment fo
 A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/passwd-env**" or "**/tmp/nopasswd-env**". Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit authorization, all by changing two strings within the gksudo-pk script.
 
 The administrator/installer is expected to check or modify four variables near the beginning of the script:
-NOPASSWD_LIST  (authors list left as default, change to fit your situation)
-NEVER_AUTH_LIST (authors list left as default, change to fit your situation)
-Admin_Grp="wheel"  (only one group is allowed to gksudo-pk. A change here must by carried over to polkit action/rule if in use)
-Use_Sudo=true  (Allows secure logging, and creation of XDG_RUNTIME_DIR directories, which reduces annoying warnings in Plasma5)
-
-## Applicability
-gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
-XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
+- **NOPASSWD_LIST**   (author's list left as default, change to fit your situation)
+- **NEVER_AUTH_LIST**  (author's list left as default, change to fit your situation)
+- **Admin_Grp="wheel"**   (only one group is allowed to run gksudo-pk. A change here must by carried over to polkit action/rule if in use)
+- **Use_Sudo=true**   (Allows secure logging, and creation of XDG_RUNTIME_DIR directories, which reduce annoying warnings in Plasma5.  See notes below)
 
 ## Logging
 gksudo-pk by default will create it's own log at **/var/log/gksudo-pk.log** if $Use_Sudo=true. If $Use_Sudo=false, the log will be kept in the invoking user's home directory **~/gksudo.pk.log**.  The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. 
@@ -47,7 +47,7 @@ It is not difficult to install this script, but the author does not encourage "p
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # optional, not recommended
  
 ## Notes
-A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
+A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk optionally creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
 
 At least some marginal security is achieved by restricting write access to the log ($Use_Sudo = true), but this, and the creation of XDG runtime directories, requires sudo, and will generate sudo password prompts that are a separate authentication from polkit/pkexec.  This can be avoided by giving the group or user a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d, or by setting $Use_Sudo = false. Again, assess your risk.
 
