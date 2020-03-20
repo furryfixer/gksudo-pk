@@ -17,13 +17,11 @@ A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec
 Only the **--user | -u** options are actually used.  All other options accepted by the original **gksudo** are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
 
 ## Details
-The invoking user MUST be a member of $ADMIN_GRP, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if the **$Use_Sudo** variable in the script is set "**true**".  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
+The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if the **$Use_Sudo** variable in the script is set "**true**".  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
 
 A first key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority** and **Display** variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one pkexec uses by default, it is still minimal compared to that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui"** annotation is **NOT required** for graphical programs to run.
 
-A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/passwd-env**" or "**/tmp/nopasswd-env**". Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit akuthorization, all by changing two strings within the gksudo-pk script.  \
-
-The invoking user may (at least initially) be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
+A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/passwd-env**" or "**/tmp/nopasswd-env**". Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit akuthorization, all by changing two strings within the gksudo-pk script.
 
 The administrator/installer is expected to check or modify four variables near the beginning of the script:
 NOPASSWD_LIST  (authors list left as default, change to fit your situation)
@@ -51,7 +49,7 @@ It is not difficult to install this script, but the author does not encourage "p
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
 
-At least some marginal security is achieved by restricting write access to the log ($Use_Sudo = true), but this, and the creation of XDG runtime directories, requires sudo, and sudo password prompts that are avoided if $Use_Sudo = false.  You may also leave "true" and avoid sudo prompts by giving the group or individual a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d.  Again, assess your risk.
+At least some marginal security is achieved by restricting write access to the log ($Use_Sudo = true), but this, and the creation of XDG runtime directories, requires sudo, and will generate sudo password prompts that are a separate authentication from polkit/pkexec.  This can be avoided by giving the group or user a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d, or by setting $Use_Sudo = false. Again, assess your risk.
 
 The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
 
