@@ -17,7 +17,7 @@ A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec
 Only the **--user | -u** options are actually used.  All other options accepted by the original **gksudo** are looked for and stripped.  The reamaining arguments are then passed to pkexec with an environment (see below)
 
 ## Details
-The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if the **$Use_Sudo** variable in the script is set "**true**".  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
+The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if **$Use_Sudo=true** is set in the script.  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
 
 A first key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority** and **Display** variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one pkexec uses by default, it is still minimal compared to that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui"** annotation is **NOT required** for graphical programs to run.
 
