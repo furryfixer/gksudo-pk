@@ -1,6 +1,6 @@
 # gksudo-pk
-## gksudo-pk [-u | --user \<user\>] \<command\>
-## gksudo [-u | --user \<user\>] \<command\>
+### gksudo-pk [-u | --user \<user\>] \<command\>
+### gksudo [-u | --user \<user\>] \<command\>
 A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs as root, or as another user. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including KDE Plasma, XFCE, MATE, LXQT. Works in both systemd (Arch) and non-systemd (Void) systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NOPASSWD_LIST: These programs may be run without password authentication.**
