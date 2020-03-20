@@ -24,6 +24,12 @@ A first key feature of gksudo-pk is the creation of a proper environment for pke
 A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/passwd-env**" or "**/tmp/nopasswd-env**". Creation of a polkit rule then allows different authorization protocol based on THE NAME of the script.  The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit akuthorization, all by changing 1 or 2 strings within the gksudo-pk script. Four items near the beginning of the script
 The invoking user may (at least initially) be asked for a SUDO password, unless the individual or group is set NOPASSWD: by sudo.  This is separate authentication from policykit/pkexec, and required to chown temporary XDG_RUNTIME_DIR directories, as well as writing log entries.
 
+The administrator/installer is expected to check or modify four variables near the beginning of the script:
+NOPASSWD_LIST  (authors list left as default, change to fit your situation)
+NEVER_AUTH_LIST (authors list left as default, change to fit your situation)
+Admin_Grp="wheel"  (only one group is allowed to gksudo-pk. A change here must by carried over to polkit action/rule if in use)
+Use_Sudo=true  (Allows secure logging, and creation of XDG_RUNTIME_DIR directories, which reduces annoying warnings in Plasma5)
+
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
 XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-systemd (Void) distributions have been tested.
@@ -32,7 +38,7 @@ XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24. Both systemd (Arch) and non-syste
 gksudo-pk by default will create it's own log at **/var/log/gksudo-pk.log**. This may be turned off by setting LOGGING="false". The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. Only root may write to the log, so sudo authentication will be required.
 
 ## Installation
-It is not difficult to install this script, but there are no plans to "package" it.  As convenient as gksudo-pk may be, it is a security risk, so some manual work is needed to discourage the unwary! To install, install sudo and zenity, then clone or download the files. Modify the following if your polkit folders are located differently for your distribution.  Ensure that $PATH includes /usr/local/bin, unless placing the links in /bin or /usr/bin instead. Fron the download directory, do the following as root:
+It is not difficult to install this script, but the author does not encourage "packaging" it, due to the security concers.  To install, install sudo and zenity, then clone or download the files. Modify the following if your polkit folders are located differently for your distribution.  Ensure that $PATH includes /usr/local/bin, unless placing the links in /bin or /usr/bin instead. Fron the download directory, do the following as root:
 
 - cp 	gksudo.pk*-env.policy /usr/share/polkit-1/actions/
 - cp 49-gksudo-pk-nopasswd-env.rules /etc/polkit-1/rules.d/
