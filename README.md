@@ -21,7 +21,7 @@ gksudo-pk is designed to be fairly universal, but has not been extensively teste
 **XFCE 4.14, KDE Plasma 5, LXQT 0.14, MATE 1.24**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested.
 
 ## Details
-The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Either the group or the user **must be a sudoer** if **$Use_Sudo=true** is set in the script.  **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
+The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Also, either the group or the user **must be a sudoer** if the invoking user is not the owner of the X session, or if **$Use_Sudo=true** is set (see below). **gksudo-pk -u | --user** allows running a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will not be run as root, and default polkit rules will apply.  
 
 An important key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority** and **Display** variables are borrowed/provided, as well as some specific variables for KDE, if needed.  While this is a larger evironment than the basic one pkexec uses by default, it is still minimal compared to that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui"** annotation is **NOT required** for graphical programs to run.
 
@@ -34,7 +34,7 @@ The administrator/installer is expected to check or modify four variables near t
 - **Use_Sudo=true**   (Allows secure logging, and creation of XDG_RUNTIME_DIR directories, which reduce annoying warnings in Plasma5.  See notes below)
 
 ## Logging
-gksudo-pk by default will create it's own log at **/var/log/gksudo-pk.log** if $Use_Sudo=true. If $Use_Sudo=false, the log will be kept in the invoking user's home directory **~/gksudo.pk.log**.  The entries are a simple record of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. 
+gksudo-pk by default will create it's own log at **/var/log/gksudo-pk.log** if $Use_Sudo=true. If $Use_Sudo=false, the log will be kept in the invoking user's home directory **~/gksudo.pk.log**.  The entries are not errors, which usually log elsewhere, but instead simple records of the attempted calling of gksudo-pk, and are made whether the pkexec command actually succeeds or fails. 
 
 ## Installation
 It is not difficult to install this script, but the author does not encourage "packaging" it, due to the security concerns.  To install, install sudo and zenity, then download the files. Modify the following if your polkit folders are located differently for your distribution.  Ensure that $PATH includes /usr/local/bin, unless placing the links in /bin or /usr/bin instead. From the download directory, do the following as root:
@@ -49,7 +49,7 @@ It is not difficult to install this script, but the author does not encourage "p
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**. For Plasma5 and Dolphin, "XDG_RUNTIME_DIR missing" (and other) warnings abound, but usually no functional errors occur. Gksudo-pk optionally creates and assigns temporary $XDG_RUNTIME_DIR directories to start (dolphin) more quickly and reduce some warnings.
 
-At least some marginal security is achieved by restricting write access to the log ($Use_Sudo = true), but this, and the creation of XDG runtime directories, requires sudo, and will generate sudo password prompts that are a separate authentication from polkit/pkexec.  This can be avoided by giving the group or user a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d, or by setting $Use_Sudo = false. Again, assess your risk.
+At least some marginal security is achieved by restricting write access to the log ($Use_Sudo = true), but this, and the creation of XDG runtime directories, requires sudo, and will generate sudo password prompts that are a separate authentication from polkit/pkexec.  This can be avoided by giving the group or user a NOPASSWD: setting in /etc/sudoers or /etc/sudoers.d, or by setting $Use_Sudo=false. Again, assess your risk.
 
 The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
 
