@@ -18,7 +18,7 @@ Only the **--user | -u** options are actually used, and as with sudo, may be omi
 
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
-**XFCE 4.14, KDE Plasma 5, MATE 1.24, Gnome 3.32**(Xorg only). Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. **LXQT** works fully, but only if unchecking lxqt-policykit-agent and adding a different polkit agent (polkit-kde-agent, for example). gksudo-pk works with the following display managers: **none(startx), xdm, lxdm, lightdm, gdm**.
+**XFCE 4.14, KDE Plasma 5, MATE 1.24, Gnome 3.32**(Xorg only). Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. **LXQT 0.14** works fully, but not with lxqt-policykit-agent (see notes below). gksudo-pk works with the following display managers: **none(startx), xdm, lxdm, lightdm, gdm**.
 
 ## Details
 The invoking user MUST be a member of **$Admin_Grp**, which defaults to **"wheel"**.  Also, either the group or the user **must be a sudoer**. The **-u | --user** option allows gksudo-pk to run a program as **ANY STANDARD USER, as well as root**.  However, $NOPASSWD_LIST will be ignored if the program will be run as a user other than root, and default polkit rules will apply.  
@@ -53,3 +53,5 @@ At least some marginal security is achieved by restricting write access to the l
 gksudo-pk, or it's gksudo link, can be used in .desktop files or custom actions, allowing the elevation of privileges with a right mouse click or menu selection from within most common file managers. In single or 2-3 user situations, this can be very convenient for EXAMINING protected files or directories, but should not be abused by indiscriminately (or accidentaly) deleting or modifying them with gksudo-pk.  Never elevate to superuser when there is no need.
 
 The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
+
+lxqt-policykit-agent seems to be broken as of 3/2020. The blame has been placed on upstream polkit, yet no other polkit agent seems to have the same problem.  From limited testing, it seems that ANY use of auth_admin in a polkit rule will fail after the password is entered. The error is "Error executing command as another user: Not authorized". This occurs even for the SAME USER. This forces the administrator to change relevant polkit rules to return "YES", or change polkit actions from "auth_admin" to "YES", which lessens security even more.  This author suggests installing another polkit agent, such as **polkit-kde-agent**. It is unnecessary to remove lxqt-policykit-agent, just uncheck the box for it in LXQT preferences. Then in preferences > session menu, add an autostart item for polkit-kde-agent.
