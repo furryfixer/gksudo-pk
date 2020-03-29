@@ -2,7 +2,7 @@
 
 // Allows users belonging to wheel group to start env as ROOT without
 // password authorization. In effect, any pkexec command line starting
-// with "/tmp/nopasswd-env" will bypass password for users in wheel.
+// with "/tmp/gk/nopasswd-env" will bypass password for users in wheel.
 // Thus gksudo-pk can choose which apps will not require password.
 // If $ADMIN_GRP is not "wheel", edit below the proper group name
 //
