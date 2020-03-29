@@ -2,55 +2,123 @@
 ###############################################################################
 # GKSUDO-PK (drop-in replacement for gksudo, gksu) with pkexec, for X11
 #            GPLv3 license, by William Rueger (furryfixer) 
-# Requires: Zenity and sudo are dependencies.
-#           $ADMIN_GRP defaults to "wheel". Only group members may run.
-# This script is designed to replace deprecated "gksu" and gksudo". It is
-# VULNERABLE and NOT SECURE by modern standards.  Use is never recommended
-# with ssh or unless behind a firewall. Pkexec is now used since sudo often
-# fails in Plasma-5.
+# Requires: Zenity and sudo dependencies.
+#
+# $Admin_Grp defaults to "wheel". Only group members may run. $USER or $Admin_Grp
+# must also be SUDOERS. This script is designed to replace deprecated
+# "gksu" and gksudo". It is VULNERABLE and NOT SECURE by modern standards.
+# Pkexec is now used since sudo may fail in Plasma-5 and elswhere.
+#
 # SIMPLIFIED GKSUDO OPTIONS.  Only "-u|--user" option accepted. If any other
 # command-line options designed for the original gksudo are encountered
 # (preceded by "-" or "--") they WILL BE IGNORED. "-" or "--" options are
 # stripped until a non-dash field encountered, at which all remaining fields,
 # including trailing "-" options, are passed on to pkexec as a command to execute.
-#
-# One of two temporary helper scripts, "/tmp/nopasswd-env" or "/tmp/password-env"
+# One of two temporary helper scripts, "/tmp/gk/nopasswd-env" or "/tmp/gk/passwd-env"
 # is generated each time gksudo-pk is invoked. A polkit rule is anticipated which
-# bypasses password requirement for the $ADMIN_GRP if "no-passwd-env" used, instead
+# bypasses password requirement for the $Admin_Grp if "nopasswd-env" used, instead
 # of "passwd-env". THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS
 # THEREFORE ELIMINATED. The administrator may simply choose SPECIFIC PROGRAMS
-# WHICH $ADMIN_GRP CAN USE WITHOUT PASSWORD, as well as SPECIFIC PROGRAMS that WILL
+# WHICH $Admin_Grp CAN USE WITHOUT PASSWORD, as well as SPECIFIC PROGRAMS that WILL
 # NEVER BE AUTHORIZED for gksudo-pk. Add to, or modify "NO_PASSWDLIST" and
 # "NEVER_AUTH_LIST" below to include desired programs. Full pathnames need not be
-# included. "|" bars in NOPASSWDLIST or NEVER_AUTH_LIST are just for legibility
-# and will be ignored.
+# included, but whitesace is required between entries.
 #
 # To revert to default polkit rules, but allow gui access, simply empty
-# or comment out NOPASSWD_LIST below
+# or comment out NOPASSWD_LIST below, or do not install custom polkit rule/action.
 ##=================================================================================##
 
-NOPASSWD_LIST="mousepad | leafpad | thunar | pcmanfm | pcmanfm-qt | dolphin | caja | pluma"
+NOPASSWD_LIST="mousepad leafpad thunar pcmanfm pcmanfm-qt dolphin caja pluma nautilus"
 
-NEVER_AUTH_LIST=""
+NEVER_AUTH_LIST="kill pkill su"
 
 ##=================================================================================##
+ 
+Admin_Grp="wheel"   #  Choose only one preferred admin or superuser group allowed to run this.
+                    #  Any change must also made in policykit action/rules!
 
-LOGGING="true"     # Will require sudo password
-ADMIN_GRP="wheel"  # Choose one preferred admin or superuser group allowed to run this
+Limit_Sudo_Use=false  #  If true, will stop some sudo password prompts, but script will not create 
+		      #  XDG_RUNTIME_DIRs and logs will be less secure. Many XDG_RUNTIME_DIR warnings
+		      #  may occur (Plasma5). If $USER or $Admin_Grp have NOPASSWD: set in
+		      #  /etc/sudoers or /etc/sudoers.d, this should be left "false".
 
-if ! id -nG $USER | grep -q "$ADMIN_GRP"; then
-    zenity --warning --title="gksudo-pk Error" --text="STOP! gksudo-pk may only be invoked by\n members of ${ADMIN_GRP} group" --no-wrap
+##---------------------------------------------------------------------------------##
+err_exit1 () {
+   sed 's^\\n^^g' <<< "$*"  # print error without zenity \n format
+   zenity --warning --title="gksudo-pk Error" --text="$*" --no-wrap 2>/dev/null
+   [[ -e "$xauth_gksudo" ]] &&	rm $xauth_gksudo
+   [[ -e "$passwdkey_script" ]] && rm $passwdkey_script
+   exit 1
+}
+sudo_znty () {
+   (sudo -A "$@" 2>/dev/null) || (sudo "$@" 2>/dev/null)
+}
+is_cmd_in_list () {
+while [ -n "$1" ]
+do
+        [[ $cmd_minus_path  = "${1}" ]] &&  return 0
+        shift
+done
+return 1
+}
+
+[[ ! -d /tmp/gk ]] && (mkdir /tmp/gk) && (chmod 0777 /tmp/gk)  # avoid sticky bit issues if su before running 
+USER=$(whoami)   # in case odd "su" invocation to root. Force to be the same.                    
+if [[ ! -e /bin/zenity ]]; then
+	echo "STOP! Zenity is not found, and required to run gksudo-pk"
 	exit 1
 fi
-echo '#!/bin/bash
-zenity --password --title="sudo to chown or log entries"' > /tmp/zenity-sudo-passwd
-chmod +x /tmp/zenity-sudo-passwd
-export SUDO_ASKPASS="/tmp/zenity-sudo-passwd"
-xauth_gksudo=$(mktemp /tmp/.gk.XXXXXXX)
-cat ~/.Xauthority > $xauth_gksudo    # XAUTHORITY borrowed from calling user owning X display
-chmod 0644 $xauth_gksudo
+if [[ ! -e /tmp/gk/zenity-sudo-passwd ]]; then
+		echo "#!/bin/bash
+zenity --password --title=\"sudo passwd required\"" > /tmp/gk/zenity-sudo-passwd
+	chmod +x /tmp/gk/zenity-sudo-passwd
+fi
+export SUDO_ASKPASS="/tmp/gk/zenity-sudo-passwd"
+if [[ $USER != "root" ]]  &&  ! (id -nG $USER | grep -q "$Admin_Grp"); then
+	err_exit1 "STOP!  gksudo-pk may only be invoked by\n members of ${Admin_Grp} group"
+fi
+x_owner=$(ls -dl "$XDG_RUNTIME_DIR" 2>/dev/null | awk '{print $3}')
+if [[ $USER != "$x_owner" ]]; then	   # not set or $USER does not own it
+	export XDG_RUNTIME_DIR=/tmp/gk/runtime-gksudo-$USER
+	if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then  
+		mkdir -m0700 $XDG_RUNTIME_DIR
+	fi    
+fi
+[[ ! "$DISPLAY" ]] && export DISPLAY=$(ps -e e | grep -q 'Xorg' |  sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | tail -1)
+export DISPLAY=$DISPLAY
+xauth_gksudo=$(mktemp /tmp/gk/.gk.XXXXXXX) 
+chmod 0666 $xauth_gksudo
+xauth_loc=""
+# The following could be eliminated with xhost SI:localuser.. but this creates as many problems as it solves
+if [[ -z "$XAUTHORITY" ]]; then    # should not be custom location if XAUTHORITY empty, just need X11 session owner
+	if ! (grep -q 'MIT-MAGIC-COOKIE' ~/.Xauthority 2>/dev/null); then    # tried easy way and failed
+		xauth_loc=""
+		if ! (sudo_znty echo ""); then   # test sudo here before recurrent sudos in while loop		
+			err_exit1 "STOP! Bad sudo password. Can not continue" 		
+		fi		
+		while read -r line   # Search for home/.Xauthority for all users. Look for MIT cookie
+		    do
+			maybe_xauth=$(echo $line | cut -d: -f6)"/.Xauthority"
+			if (sudo_znty  grep -q 'MIT-MAGIC-COOKIE' $maybe_xauth); then
+				xauth_loc=$maybe_xauth			
+				break		
+			fi
+		    done < /etc/passwd
+		if [[ -z $xauth_loc ]]; then  # MAGIC COOKIE  not found
+			err_exit1 "STOP! Bad sudo password, or unable to \n to find working .Xauthority file "
+		elif  ! (sudo_znty  cp $xauth_loc $xauth_gksudo); then
+			err_exit1 "STOP! Unable to read .Xauthority or \n discern proper file. Bad sudo password? "
+		fi
+	else  # $USER .Xauthority seems to be the one
+		cp ~/.Xauthority $xauth_gksudo
+	fi	
+else # $XAUTHORITY set already
+	if ! (cp $XAUTHORITY $xauth_gksudo 2>/dev/null) && ! (sudo_znty  cp $XAUTHORITY $xauth_gksudo); then
+		err_exit1 "STOP! sudo password failed, or unable \n to read XAUTHORITY file "
+	fi
+fi 
+export XAUTHORITY=$xauth_gksudo
 as_user="root"
-
 while :   # Deal with legacy gksudo options, all but --user|-u are stripped/ignored
 do
 	case "$1" in
@@ -65,61 +133,66 @@ do
 	-* | --*)                # All other options only 1 shift needed to erase
 		shift
 		;; 
-	*)			# Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
+	 *)			# Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
 		break
 		;;	
 	esac
 done
-	
-if [[ $# -lt 1 ]]; then
-	zenity --warning --title="gksudo-pk Error" --text="STOP! Improper syntax or missing arguments" --no-wrap
-	exit 1
-fi	
+
+[[ $# -lt 1 ]]  &&  (err_exit1 "STOP! Improper syntax or missing arguments")
+if ! (id "$as_user" >/dev/null 2>&1); then
+	err_exit1 "STOP! \" "$as_user"\" is not a known username \n on the local system"
+fi
 #   Our new $1 should be the command to pass to pkexec, but first we need to 
 #   compare with commands in $NEVER_AUTH_LIST and $NOPASSWORD_LIST above. We must strip full path
 #   if present only for the purpose of this comparison.  		
-no_full_pathname=${1##*/}       # Strips  /usr/bin/.../  prefixes
-if [[ "$NEVER_AUTH_LIST" == *"$no_full_pathname"* ]]; then
-	zenity --warning --title="gksudo-pk Error" --text="gksudo-pk execution of $1 is\n prevented by local policy!" --no-wrap
-	exit 1
-fi
+cmd_minus_path=${1##*/}       # Strips  /usr/bin/.../  prefixes
+is_cmd_in_list ${NEVER_AUTH_LIST} && err_exit1 "STOP! gksudo-pk execution of ${1} is\n prevented by local policy!"
 zenity --warning --text=" gksudo-pk invoked allowing \""$as_user"\"\n access to this X11 display!" --no-wrap
-[ ! -e /tmp/runtime-gksudo-$as_user ] &&  mkdir -m0700 /tmp/runtime-gksudo-${as_user}
-sudo -A chown ${as_user} /tmp/runtime-gksudo-${as_user}
-newhome=$(eval echo "~${as_user}")
-if [[ "$as_user" == "root" ]] && [[ "$NOPASSWD_LIST" == *"$no_full_pathname"* ]]; then	
-	echo "#!/bin/bash
+as_usr_rundir=""
+if [[ $Limit_Sudo_Use = false ]]; then      # This conditional sets XDG_RUNTIME_DIR for $as_user in pkexec
+	export as_usr_rundir=/tmp/gk/runtime-gksudo-as-$as_user
+	if [[ ! -d /tmp/gk/runtime-gksudo-as-$as_user ]]; then  
+		mkdir -m0700 /tmp/gk/runtime-gksudo-as-$as_user
+		if ! (sudo -A chown $as_user $as_usr_rundir); then
+			err_exit1 "STOP! sudo chown failed. Bad password? \n Unable to \"chown\" gksudo-pk runtime directories."
+		fi
+	fi
+fi
+as_usr_home=$(eval echo "~${as_user}")
+if [[ $as_user = "root" ]] && (is_cmd_in_list ${NOPASSWD_LIST}); then
+	passwdkey_script=/tmp/gk/nopasswd-env
+else 
+	passwdkey_script=/tmp/gk/passwd-env
+fi	
+if [[ ! -e $passwdkey_script ]]; then
+	touch $passwdkey_script
+	chmod 0777 $passwdkey_script
+fi
+echo "#!/bin/bash
 	set -a
 	. /etc/environment
-	DISPLAY=\":0\"
+	DISPLAY=${DISPLAY}
 	XAUTHORITY=${xauth_gksudo}
-	XDG_RUNTIME_DIR=/tmp/runtime-gksudo-${as_user}
-	XDG_CONFIG_HOME=${newhome}/.config
+	XDG_RUNTIME_DIR=${as_usr_rundir}
+	XDG_CONFIG_HOME=${as_usr_home}/.config
 	KDE_SESSION_VERSION=5
 	KDE_FULL_SESSION=true
-	\$@" > /tmp/nopasswd-env
-	passwdkey_script=/tmp/nopasswd-env
+	\$@" > $passwdkey_script
+ 
+timestamp=`date +%D" "%H:%M:%S`
+program="$@"
+if [[ $Limit_Sudo_Use = false ]]; then
+	if ! (sudo -A bash -c "echo \"${timestamp}.  User <${USER}> ran <$program> as user <${as_user}>\"  >> /var/log/gksudo-pk.log"); then
+		err_exit1 "STOP! sudo password failed for logging. \n Fatal error if \"Limit_Sudo_Use\" set false"
+	fi
 else
-    echo "#!/bin/bash
-	set -a
-	. /etc/environment
-	DISPLAY=\":0\"
-	XAUTHORITY=${xauth_gksudo}
-	XDG_RUNTIME_DIR=/tmp/runtime-gksudo-${as_user}
-	XDG_CONFIG_HOME=${newhome}/.config
-	KDE_SESSION_VERSION=5
-	KDE_FULL_SESSION=true
-	\$@" > /tmp/passwd-env
-	passwdkey_script=/tmp/passwd-env
-fi
-chmod 0777 $passwdkey_script
-if $LOGGING ; then
-	timestamp=`date +%D" "%H:%M:%S`
-	sudo -A bash -c "echo \"${timestamp}.  User <${USER}> ran <${@}> as user <${as_user}>\" >> /var/log/gksudo-pk.log"
+	echo "${timestamp}.  User <${USER}> ran <$program> as user <${as_user}>"  >> ~/gksudo-pk.log
 fi
 
-pkexec --user $as_user $passwdkey_script $@
-
-rm $passwdkey_script
-rm $xauth_gksudo
+if ! pkexec --user $as_user $passwdkey_script $@; then
+	err_exit1 "STOP!  pkexec failed with an error. \n likely bad password or program not found "
+fi
+[[ -e "$xauth_gksudo" ]] &&  rm $xauth_gksudo
+[[ -e "$passwdkey_script" ]] &&  rm $passwdkey_script
 exit 0
