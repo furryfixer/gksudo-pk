@@ -44,7 +44,7 @@ It is not difficult to install this script, but the author does not encourage "p
 - cp gksudo-pk /usr/local/bin/
 - chmod 0755 /usr/local/bin/gksudo-pk
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksudo  # recommended to replace "gksudo"
-- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # not recommended, replace "gksudo"
+- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # not recommended, replace "gksu"
  
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**.
