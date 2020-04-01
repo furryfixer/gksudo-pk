@@ -1,7 +1,8 @@
 # gksudo-pk
 ### gksudo-pk [-u | --user \<user\>] \<command\>
-### gksudo [-u | --user \<user\>] \<command\>
-A drop-in replacement for **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs as root, or as another user. It does not use xhost, or call xauth directly. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the X11 desktop. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma, XFCE, MATE, GNOME(Xorg), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
+#### gksudo [-u | --user \<user\>] \<command\>
+#### gksu [-u | --user \<user\>] \<command\>
+A drop-in replacement for **gksu** and **gksudo**, with fewer options. For X11 only. **Pkexec** is used to launch graphical programs as root, or as another user. It does not use xhost, or call xauth directly. **Sudo** and **Zenity** are required dependencies. This bash script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the X11 desktop. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma, XFCE, MATE, GNOME(Xorg), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NOPASSWD_LIST: These programs may be run without password authentication.**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from running.**
@@ -44,7 +45,7 @@ It is not difficult to install this script, but the author does not encourage "p
 - cp gksudo-pk /usr/local/bin/
 - chmod 0755 /usr/local/bin/gksudo-pk
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksudo  # recommended to replace "gksudo"
-- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # not recommended, replace "gksu"
+- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # recommended to replace "gksu"
  
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**.
