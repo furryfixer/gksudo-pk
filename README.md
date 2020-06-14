@@ -12,7 +12,6 @@ A drop-in replacement for **gksu** and **gksudo**, with fewer options. For X11 o
 ## Dependencies
 **bash, sudo, zenity**
 
-##
 
 ## Options
 Only the **--user | -u** options are actually used, and as with sudo, may be omitted for "**-u root**".  All other options accepted by the original **gksudo** are looked for and stripped.  The remaining arguments are then passed to pkexec with an environment (see below)
