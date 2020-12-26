@@ -5,7 +5,7 @@
 A drop-in replacement for **gksu** and **gksudo**, with fewer options. For X11 only. Gksudo-pk is a simple bash script. **Pkexec** is used to launch graphical programs as root, or as another user. It does not use xhost, or call xauth directly. **Sudo** and **Zenity** are required dependencies. This script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the X11 desktop. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma, XFCE, MATE, GNOME(Xorg), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NOPASSWD_LIST: These programs may be run without password authentication.**
-- **NEVER_AUTH_LIST: These programs are prohibited entirely from running.**
+- **NEVER_AUTH_LIST: These programs are prohibited entirely from launching with gksudo-pk.**
 
 **THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one new polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  Also, If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, and default polkit rules for pkexec will be used for all authorized programs.
 
