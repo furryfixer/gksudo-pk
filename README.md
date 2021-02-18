@@ -25,7 +25,7 @@ The invoking user **MUST be a SUDOER**, either as an individual, or by group mem
 
 An important key feature of gksudo-pk is the creation of a proper environment for pkexec to use.  **/etc/environment** is sourced, and **Xauthority**, **Display**, and **wayland_display** variables are borrowed/provided, as well as a runtime directory, and some specific variables for KDE, if needed.  While this is a larger environment than the basic one pkexec uses by default, it is still (slightly) less than that of a regular user.  Importantly, a polkit **"org.freedesktop.policykit.exec.allow_gui"** annotation is **NOT required** for graphical programs to run.
 
-A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/gk/passwd-env**" or "**/tmp/gk/nopasswd-env**".  The provided polkit rules then allow different authorization protocols for programs in the "nopassword" group. The administrator may then assign programs to normal, lesser, (or greater, with modifications) polkit authorization, all by changing two strings within the gksudo-pk script.
+A second important feature is the placement of the environment within one of two temporary executable scripts, "**/tmp/gk/passwd-env**" or "**/tmp/gk/nopasswd-env**".  The provided polkit rules then allow the administrator to assign programs to normal, lesser, (or greater, with modifications) polkit authorization, all by changing the two strings mentioned below within the gksudo-pk script.
 
 The administrator/installer is expected to check or modify two variables near the beginning of the script:
 - **NOPASSWD_LIST**   (author's list left as default, change to fit your situation)
