@@ -1,0 +1,13 @@
+// 47-gksudo-pk-nopasswd-env.rules
+
+// Allows local users with sudo privileges to start env as ROOT without
+// password authorization, if running "/tmp/gk/nopasswd-env".
+// Thus, gksudo-pk can choose which apps will not require password.
+//
+polkit.addRule(function(action, subject) {
+        if ((action.id == "gksudo.pk.nopasswd.env") &&
+            subject.local &&
+            subject.active) {
+            return polkit.Result.YES;
+        }
+});
