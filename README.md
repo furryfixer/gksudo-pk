@@ -2,15 +2,15 @@
 ### gksudo-pk [-u | --user \<user\>] \<command\>
 #### gksudo [-u | --user \<user\>] \<command\>
 #### gksu [-u | --user \<user\>] \<command\>
-A drop-in replacement for **gksu** and **gksudo**, with fewer options. **RECENTLY REWRITTEN FOR WAYLAND** as well as for X11. Gksudo-pk is a simple bash script. **Pkexec** is used to launch graphical programs as root, or AS ANOTHER USER. It does not use xhost, or call xauth directly. **Sudo** and **Zenity** are required dependencies. This script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the display server. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma (Xorg and Wayland), XFCE, MATE, GNOME(Xorg and Wayland), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
+A drop-in replacement for **gksu** and **gksudo**, with fewer options. **RECENTLY REWRITTEN FOR WAYLAND** as well as for X11. Gksudo-pk is a simple bash script. **Pkexec** is used to launch graphical programs as root, or AS ANOTHER USER. It does not use xhost, or call xauth directly. This script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the display server. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma (Xorg and Wayland), XFCE, MATE, GNOME (Xorg and Wayland), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems.  Works for **gnome-terminal**, **konsole**, **nautilus**,**dolphin** and most GUI text editors in both Wayland and Xorg. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
-- **NOPASSWD_LIST: These programs may be run without password authentication.**
+- **NOPASSWD_LIST: These programs may be run without password authentication (if Sudoer).**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from launching with gksudo-pk.**
 
-**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one new polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  Also, If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, and default polkit rules for pkexec will be used for all authorized programs.  SUDO administrative users/groups are used for pkexec authentication in gksudo-pk, NOT Polkit administrative groups, although these are often the same (wheel).
+**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one new polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  Also, If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, and default polkit rules for pkexec will be used for all authorized programs.  SUDO administrative users/groups are used for pkexec authentication in gksudo-pk, NOT polkit administrative groups, although these are often the same (wheel).
 
 ## Dependencies
-**bash, sudo, zenity**
+**bash, sudo, dbus, polkit, zenity**
 
 
 ## Options
@@ -18,7 +18,7 @@ Only the **--user | -u** options are actually used, and as with sudo, may be omi
 
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
-**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.24, Gnome 3.32 (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. **LXQT 0.14** works fully, but not with lxqt-policykit-agent (see notes below). gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**.
+**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.24, Gnome 3.38 (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. **LXQT 0.14** works fully, but not with lxqt-policykit-agent (see notes below). gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**. I3 and Sway have been poorly tested, but should work if a polkit agent is running.
 
 ## Details
 The invoking user **MUST be a SUDOER**, either as an individual, or by group membership (often "wheel" or "sudo"). The **-u | --user** option allows gksudo-pk to run a program as **ANY STANDARD USER, as well as root**.  
@@ -43,13 +43,13 @@ It is not difficult to install this script, but the author does not encourage "p
 - cp gksudo-su /usr/local/bin/
 - chmod 0755 /usr/local/bin/gksudo-pk
 - chmod 0744 /usr/local/bin/gksudo-su
-- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksudo  # recommended to replace "gksudo"
-- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu    # recommended to replace "gksu"
+- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksudo   # recommended to replace "gksudo"
+- ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu     # recommended to replace "gksu"
  
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**.
 
-Temporary $XDG_RUNTIME_DIR directories separate from the standard ones.
+Temporary $XDG_RUNTIME_DIR directories are created separately from the standard ones.
 
 Gksudo-pk, or it's gksu/gksudo link, can be used in .desktop files or custom actions, allowing the elevation of privileges with a right mouse click or menu selection from within most common file managers. You will be warned when doing this. In single or 2-3 user situations, this can be very convenient for EXAMINING protected files or directories, but should not be abused by indiscriminately (or accidentaly) deleting or modifying them with gksudo-pk.  Never elevate to superuser when there is no need.
 
