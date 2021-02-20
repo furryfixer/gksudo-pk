@@ -1,0 +1,161 @@
+#! /bin/bash
+####################################################################################
+# GKSUDO-PK (drop-in replacement for gksudo, gksu) with pkexec, for X11 or
+#            Wayland. GPLv3 license, by William Rueger (furryfixer) 
+# Requires: Zenity, sudo, polkit, and elogind or systemd dependencies.
+# Also requires a helper script, GKSUDO-SU, for actions with elevated privileges.
+#
+# The invoking user MUST be a SUDOER, either individually or as part of a 
+# group (such as wheel or sudo) with sudo privileges. This script is designed
+# to replace deprecated "gksu" and gksudo". It is VULNERABLE and NOT SECURE by
+# modern standards. Pkexec is now used for authentication, allowing switching
+# to non-root users.
+#
+# SIMPLIFIED GKSUDO OPTIONS.  Only "-u|--user" option accepted. If any other
+# command-line options designed for the original gksudo are encountered
+# (preceded by "-" or "--") they WILL BE IGNORED. "-" or "--" options are
+# stripped until a non-dash field encountered, at which all remaining fields,
+# including trailing "-" options, are passed on to pkexec as a command to execute.
+# One of two temporary helper scripts, "/tmp/gk/nopasswd-env" or "/tmp/gk/passwd-env"
+# is generated each time gksudo-pk is invoked. A polkit rule is anticipated which
+# bypasses password requirement for user (Sudoer) if "nopasswd-env" used, instead
+# of "passwd-env". THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS
+# THEREFORE ELIMINATED. The administrator may simply choose SPECIFIC PROGRAMS
+# WHICH SUDOERS CAN USE WITHOUT PASSWORD, as well as SPECIFIC PROGRAMS that WILL
+# NEVER BE AUTHORIZED for gksudo-pk. Add to, or modify "NO_PASSWDLIST" and
+# "NEVER_AUTH_LIST" below to include desired programs. Full pathnames need not be
+# included, but whitesace is required between entries. The custom polkit rule/actions
+# will not use a default polkit Auth_admin group!, but instead rely on
+# SUDO Administrator groups. These are often the same however (wheel).
+#
+# To revert to default polkit rules, but allow gui access, simply empty
+# or comment out NOPASSWD_LIST below, or do not install custom polkit rule/actions.
+##=================================================================================##
+
+NOPASSWD_LIST="mousepad leafpad thunar pcmanfm pcmanfm-qt dolphin caja pluma nautilus lxterminal qterminal gnome-terminal xfce4-terminal mate-terminal konsole"
+
+NEVER_AUTH_LIST="kill pkill su rm chmod chown"
+
+##=================================================================================##
+
+err_exit1 () {
+   if ! (zenity --warning --title="gksudo-pk Error" --text="$*" --no-wrap --no-markup 2>/dev/null); then
+       sed 's^\\n^^g' <<< "$*"  # print error without zenity \n format
+   fi
+   exit 1
+}
+sudo_znty () {
+   if ! sudo -A "$@" > /dev/null 2>/tmp/gk/sudo-error; then
+	if grep "3 incorrect password attempts" /tmp/gk/sudo-error; then
+		err_exit1 "STOP!  No valid password for ${USER} 
+ after multiple attempts"
+   	elif grep "not in the sudoers file" /tmp/gk/sudo-error; then
+		err_exit1 "STOP! User \"${USER}\" has no sudo privileges, 
+ which gksudo-pk requires."
+   	fi
+   fi
+}
+is_cmd_in_list () {
+   while [ -n "$1" ]
+   do
+        [[ $cmd_minus_path  = "${1}" ]] &&  return 0
+        shift
+   done
+   return 1
+}
+
+[[ ! -d /tmp/gk ]] && (mkdir -m0777 /tmp/gk)  # avoid sticky bit issues if su before running
+if [[ ! -e /bin/zenity ]]; then
+	echo "STOP! Zenity is not found, and required to run gksudo-pk"
+	exit 1
+fi
+if [[ ! -f /tmp/gk/sudo-error ]]; then
+      touch /tmp/gk/sudo-error 
+      chmod 0666 /tmp/gk/sudo-error
+fi
+USER=$(whoami)   # in case odd "su" invocation to root. Force to be the same.
+usr_home=$(eval echo "~${USER}")   
+[[ -f /tmp/gk/zenity-sudo-passwd ]] && rm /tmp/gk/zenity-sudo-passwd
+echo "#!/bin/bash
+zenity --entry --title=\"sudo Password\" --text \"Enter Password for \\\"${USER}\\\"          \"" > /tmp/gk/zenity-sudo-passwd
+chmod 0777 /tmp/gk/zenity-sudo-passwd
+export SUDO_ASKPASS="/tmp/gk/zenity-sudo-passwd"
+[[ -z "$DISPLAY" ]] && export DISPLAY=$(ps -e e | grep -q 'Xorg' |  sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | tail -1)
+if [[ -z "$XDG_RUNTIME_DIR" ]]; then
+      XDG_RUNTIME_DIR=/tmp/gk/runtime-gk-$USER 
+      [[ ! -d "$XDG_RUNTIME_DIR" ]] && mkdir -m0700 $XDG_RUNTIME_DIR
+fi
+if [[ $XDG_SESSION_TYPE = "wayland" ]] || [ ! -z "$WAYLAND_DISPLAY" ]; then   # Session is Wayland
+      if [[ -z "$wayland_socket" ]] ; then  # Is top level (not nested)
+		orig_xdg_rundir=$XDG_RUNTIME_DIR
+      ## For local (script) use, set WAYLAND_DISPLAY to the full path, but not sure if already done
+            if [[ ! -z "$WAYLAND_DISPLAY" ]]; then
+                  wd_no_path=${WAYLAND_DISPLAY##*/}
+                  WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/"$wd_no_path  ## Sets to full path
+            else
+                  WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/wayland-0"
+            fi 
+            wayland_socket=$WAYLAND_DISPLAY  # $wayland_socket and $orig_xdg_rundir are retained in case nesting
+      else
+            WAYLAND_DISPLAY=$wayland_socket # Temporary, allows Zenity early access to display if nested gksudo-pk used
+      fi
+fi  
+as_user="root"
+while :   # Deal with legacy gksudo options, all but --user|-u are stripped/ignored
+do
+	case "$1" in
+	-u | --user) 	# Pass the following username to pkexec
+		as_user=$2
+		shift 2
+		;;
+	-m | --message | -D | --description)   # Only other gksudo options which used 2nd following field?
+		shift 2
+		;;
+	
+	-* | --*)   	# All other options only 1 shift needed to erase
+		shift
+		;; 
+	 *)			# Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
+		break
+		;;	
+	esac
+done
+
+[[ $# -lt 1 ]]  &&  err_exit1 "STOP! Improper syntax or missing arguments"
+if ! (id "$as_user" >/dev/null 2>&1); then
+	err_exit1 "STOP! \" "$as_user"\" is not a known username 
+ on the local system"
+fi
+#   Our new $1 should be the command to pass to pkexec, but first we need to 
+#   compare with commands in $NEVER_AUTH_LIST and $NOPASSWORD_LIST above. We must strip full path
+#   if present only for the purpose of this comparison.  		
+cmd_minus_path=${1##*/}       # Strips  /usr/bin/.../  prefixes
+hash "$1" 2>/dev/null || err_exit1 "STOP! Command ${1} not found"
+is_cmd_in_list ${NEVER_AUTH_LIST} && err_exit1 "STOP! gksudo-pk execution of ${1} is 
+ prevented by local policy!"
+gnom_trmnl=false
+[[ "$cmd_minus_path" = "gnome-terminal" ]] && gnom_trmnl=true  # Pass a flag to allow special handling of gnome-terminal
+[[ "$cmd_minus_path" = "mate-terminal" ]] && set -- "$@" "--disable-factory" # Force mate-terminal to start new PID
+zenity --warning --text=" gksudo-pk invoked allowing \""$as_user"\"\n access to this display server!" --no-wrap
+if (is_cmd_in_list ${NOPASSWD_LIST}); then
+	passwdkey_script=/tmp/gk/nopasswd-env
+else 
+	passwdkey_script=/tmp/gk/passwd-env
+fi
+sudo_znty orig_xdg_rundir=$orig_xdg_rundir \
+     DISPLAY=$DISPLAY \
+     XAUTHORITY=$XAUTHORITY \
+     XDG_SESSION_TYPE=$XDG_SESSION_TYPE \
+     XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
+     WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+     wayland_socket=$wayland_socket \
+     INVOKING_USR=$USER \
+     usr_home=$usr_home \
+     as_user=$as_user \
+     passwdkey_script=$passwdkey_script \
+     gnom_trmnl=$gnom_trmnl \
+     gksudo-su $@
+     
+exit 0
+
+
