@@ -7,7 +7,7 @@ A drop-in replacement for **gksu** and **gksudo**, with fewer options. **RECENTL
 - **NOPASSWD_LIST: These programs may be run without password authentication (if Sudoer).**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from launching with gksudo-pk.**
 
-**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. Only one new polkit action/rule pair is needed.  All other progams will be subject to default polkit/pkexec rules.  Also, If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, and default polkit rules for pkexec will be used for all authorized programs.  SUDO administrative users/groups are used for pkexec authentication in gksudo-pk, NOT polkit administrative groups, although these are often the same (wheel).
+**THE NEED FOR A SEPARATE POLKIT RULE FOR EACH APPLICATION IS THEREFORE ELIMINATED**. SUDO administrative users/groups are used for pkexec authentication in gksudo-pk, NOT polkit administrative groups, although these are often the same (wheel). Only one new polkit action/rule pair is needed.  All other progams will be subject to default sudo (password) rules.  If gksudo-pk polkit action/rules are not installed, NOPASSWD_LIST is ignored, and default sudo authorization will be used for all programs not found in "NEVER_AUTH_LIST".
 
 ## Dependencies
 **bash, sudo, dbus, polkit, zenity**
