@@ -19,7 +19,7 @@ Only the **--user | -u** options are actually used, and as with sudo, may be omi
 
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
-**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.24, LXQT 0.17, Gnome 40 (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**. I3 and Sway have been poorly tested, but should work if a polkit agent is running.
+**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.26, LXQT 0.17, Gnome 40 (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**. I3 and Sway have been poorly tested, but should work if a polkit agent is running.
 
 ## Details
 The invoking user **MUST be a SUDOER**, either as an individual, or by group membership (often "wheel" or "sudo"). The **-u | --user** option allows gksudo-pk to run a program as **ANY STANDARD USER, as well as root**.  
