@@ -30,9 +30,10 @@
 #
 # To revert to default polkit rules, but allow gui access, simply empty
 # or comment out NOPASSWD_LIST below, or do not install custom polkit rule/actions.
+# Updated 3/2022 
 ##=================================================================================##
 
-NOPASSWD_LIST="mousepad leafpad thunar pcmanfm pcmanfm-qt dolphin caja pluma nautilus lxterminal qterminal gnome-terminal xfce4-terminal mate-terminal konsole"
+NOPASSWD_LIST="mousepad leafpad gedit thunar pcmanfm pcmanfm-qt dolphin caja pluma nautilus lxterminal qterminal gnome-terminal xfce4-terminal mate-terminal konsole"
 
 NEVER_AUTH_LIST="kill pkill su rm chmod chown"
 
@@ -74,16 +75,20 @@ if [[ ! -f /tmp/gk/sudo-error ]]; then
 	chmod 0666 /tmp/gk/sudo-error
 fi
 USER=$(whoami)   # in case odd "su" invocation to root. Force to be the same.
-usr_home=$(eval echo "~${USER}")   
+usr_home=$(eval echo "~${USER}")
+current_dir=`pwd` 
 [[ -f /tmp/gk/zenity-sudo-passwd ]] && rm /tmp/gk/zenity-sudo-passwd
 echo "#!/bin/bash
 zenity --entry --title=\"sudo Password\" --text \"Enter Password for \\\"${USER}\\\"          \"" > /tmp/gk/zenity-sudo-passwd
 chmod 0777 /tmp/gk/zenity-sudo-passwd
 export SUDO_ASKPASS="/tmp/gk/zenity-sudo-passwd"
-[[ -z "$DISPLAY" ]] && export DISPLAY=$(ps -e e | grep -q 'Xorg' |  sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | tail -1)
+[[ -z "$DISPLAY" ]] && export DISPLAY=$(ps -e e | grep 'Xorg' |  sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | tail -1)
 if [[ -z "$XDG_RUNTIME_DIR" ]]; then
 	XDG_RUNTIME_DIR=/tmp/gk/runtime-gk-$USER 
 	[[ ! -d "$XDG_RUNTIME_DIR" ]] && mkdir -m0700 $XDG_RUNTIME_DIR
+fi
+if [[ $XDG_CURRENT_DESKTOP = "KDE" ]] && [[ -z $active_kscrn ]]; then
+	export active_kscrn=$(eval echo "~${USER}")"/.local/share/kscreen"
 fi
 if [[ $XDG_SESSION_TYPE = "wayland" ]] || [ ! -z "$WAYLAND_DISPLAY" ]; then   # Session is Wayland
 	if [[ -z "$wayland_socket" ]] ; then  # Is top level (not nested)
@@ -133,9 +138,15 @@ cmd_minus_path=${1##*/}       # Strips  /usr/bin/.../  prefixes
 hash "$1" 2>/dev/null || err_exit1 "STOP! Command ${1} not found"
 is_cmd_in_list ${NEVER_AUTH_LIST} && err_exit1 "STOP! gksudo-pk execution of ${1} is 
  prevented by local policy!"
-gnom_trmnl=false
-[[ "$cmd_minus_path" = "gnome-terminal" ]] && gnom_trmnl=true  # Pass a flag to allow special handling of gnome-terminal
-[[ "$cmd_minus_path" = "mate-terminal" ]] && set -- "$@" "--disable-factory" # Force mate-terminal to start new PID
+if [[ "$cmd_minus_path" = "mate-terminal" ]]; then
+	set -- "$@" "--disable-factory" # Force mate-terminal to start new PID
+elif [[ "$cmd_minus_path" = "gnome-terminal" ]] && ( ! grep -q 'gnome-terminal.*--wait' <<< $1 ); then
+	set -- "$@" "--wait" # Force gnome-terminal to use --wait option
+fi
+if [[ ! -z $WAYLAND_DISPLAY ]] && [[ ! `xhost | grep "localuser:$as_user"` ]]; then
+	need_xhost=true
+	xhost +SI:localuser:$as_user 1>/dev/null # Regretably required for XWayland 
+fi
 zenity --warning --text=" gksudo-pk invoked allowing \""$as_user"\"\n access to this display server!" --no-wrap
 if (is_cmd_in_list ${NOPASSWD_LIST}); then
 	passwdkey_script=/tmp/gk/nopasswd-env
@@ -145,17 +156,18 @@ fi
 sudo_znty orig_xdg_rundir=$orig_xdg_rundir \
      DISPLAY=$DISPLAY \
      XAUTHORITY=$XAUTHORITY \
+     XDG_CURRENT_DESKTOP=$XDG_CURRENT_DESKTOP \
      XDG_SESSION_TYPE=$XDG_SESSION_TYPE \
      XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
      WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
      wayland_socket=$wayland_socket \
      INVOKING_USR=$USER \
      usr_home=$usr_home \
+     active_kscrn=$active_kscrn \
      as_user=$as_user \
+     current_dir=$current_dir \
      passwdkey_script=$passwdkey_script \
-     gnom_trmnl=$gnom_trmnl \
      gksudo-su $@
-     
+
+[[ $need_xhost = true ]] && xhost -SI:localuser:$as_user 1>/dev/null
 exit 0
-
-
