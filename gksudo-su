@@ -4,11 +4,11 @@
 #    This secondary script is called by GKSUDO-PK for actions requiring elevated 
 #    (sudo) privileges. Required variable assignments are passed in the 
 #    calling statement from GKSUDO-PK.  Created under GPLv3 license, by
-#    William Rueger (furryfixer) 
+#    William Rueger (furryfixer). Updated 3/2022
 ##=================================================================================##
 
 err_exit1 () {
-	if ! (zenity --warning --title="gksudo-pk Error" --text="$*" --no-wrap --no-markup 2>/dev/null); then
+	if ! (zenity --warning --title="gksudo-pk Error" --text="$*" --width 600 --no-markup 2>/dev/null); then
 		sed 's^\\n^^g' <<< "$*"  # print error without zenity \n format
 	fi
 	rm $xauth_gksudo 2> /dev/null
@@ -32,6 +32,13 @@ err_exit1 () {
 	exit 1
 }
 
+restore_kscrn () {
+	if [[ -L $as_usr_kscrn ]]; then
+		rm $as_usr_kscrn
+		[[ -d $as_usr_kscrn"0" ]] && mv $as_usr_kscrn"0" $as_usr_kscrn
+	fi
+}
+####
 if [[ -z "$INVOKING_USR" ]]; then
 	err_exit1 "STOP! gksudo-su improperly called, or
 attempted to run independently of gksudo-pk "
@@ -76,7 +83,6 @@ else # WAYLAND SESSION!
 		fi
 	fi
 fi
-
 as_usr_home=$(eval echo "~${as_user}")
 timestamp=`date +%D" "%H:%M:%S`
 program=$@
@@ -85,60 +91,62 @@ echo "${timestamp}.  User <${INVOKING_USR}> ran <$program> as user <${as_user}>"
 echo "#!/bin/bash
    set -a
    . /etc/environment
-   orig_xdg_rundir=${orig_xdg_rundir} \
-   DISPLAY=${DISPLAY} \
-   XAUTHORITY=${xauth_gksudo} \
-   XDG_SESSION_TYPE=${XDG_SESSION_TYPE} \
-   XDG_RUNTIME_DIR=${as_usr_rundir} \
-   XDG_CONFIG_HOME=${as_usr_home}/.config \
-   wayland_socket=${wayland_socket} \
-   WAYLAND_DISPLAY=${as_usr_wayland_sock} \
-   KDE_SESSION_VERSION=5 \
-   KDE_FULL_SESSION=true" > $passwdkey_script
-if [[ "$gnom_trmnl" = true ]]; then
-	# Add snippet to prevent pkexec from exiting before gnome-terminal instance closes
-	     # Lines below try to ID new /dev/pts for gnome-terminal and keep script alive until window closes
-	# dbus-run-session did NOT work as well. Save dbus-daemon PID to kill later
-	echo "before=\$(ls /dev/pts)
-	if dbus-launch ${@}; then 
-		pgrep -n dbus-daemon > ${as_usr_rundir}/pids
-		after=\$(ls /dev/pts) 
-		pts_new=\$(comm -23 <(tr ' ' \$'\\n' <<< \$after | sort) <(tr ' ' \$'\\n' <<< \$before | sort))
-		while [ -e \"/dev/pts/\${pts_new}\" ]; do
-			sleep 1
-		done
-	else
-		exit 1
-	fi" >> $passwdkey_script
-else  # every command other than gnome-terminal.
-	if [[ $XDG_SESSION_TYPE = "wayland" ]]; then
-		echo "dbus-launch ${@}
-		pgrep -n dbus-daemon > ${as_usr_rundir}/pids" >> $passwdkey_script
-	else
-		echo "${@}" >> $passwdkey_script
+   cd ${current_dir} 2>/dev/null
+   orig_xdg_rundir=${orig_xdg_rundir}
+   DISPLAY=${DISPLAY}
+   XAUTHORITY=${xauth_gksudo}
+   XDG_SESSION_TYPE=${XDG_SESSION_TYPE}
+   XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}
+   XDG_RUNTIME_DIR=${as_usr_rundir}
+   XDG_CONFIG_HOME=${as_usr_home}/.config
+   active_kscrn=${active_kscrn}
+   wayland_socket=${wayland_socket}
+   WAYLAND_DISPLAY=${as_usr_wayland_sock}" > $passwdkey_script
+if [[ $XDG_CURRENT_DESKTOP = "KDE" ]]; then
+	as_usr_kscrn="${as_usr_home}/.local/share/kscreen"
+	if [[ $as_usr_kscrn != $active_kscrn ]] && [[ ! -L $as_usr_kscrn ]]; then
+		if [[ -d $as_usr_kscrn ]]; then
+			[[ ! -d $as_usr_kscrn"0" ]] && mv $as_usr_kscrn $as_usr_kscrn"0"
+			chown $as_usr $as_usr_kscrn"0"
+		fi
+		ln -s $active_kscrn $as_usr_kscrn
+		chown  $as_usr $as_usr_kscrn
 	fi
+	echo "   KDE_SESSION_VERSION=5
+   KDE_FULL_SESSION=true" >> $passwdkey_script
+else
+	as_usr_kscrn="null"
 fi
+# All Wayland, and some Gnome apps, require dbus-launch with this method.
+	#    dbus-run-session does not work, so try to PID new dbus-daemon
+	#    instances and remove them after.
+echo "   last_dbus=\$(pgrep -n dbus-daemon)
+   dbus-launch ${@}
+   new_dbus=\$(pgrep -n dbus-daemon)
+   [[ \$new_dbus -ne \$last_dbus ]] && kill \$new_dbus" >> $passwdkey_script
 chmod 0777 $passwdkey_script
 
 if ! sudo -u $INVOKING_USR  pkexec --user $as_user $passwdkey_script &>/tmp/gk/sudo.pk.error; then
+	restore_kscrn
 	if [[ -s /tmp/gk/sudo.pk.error ]]; then  # If no error reported, we will allow to fail silently
 		if grep "command as another user" /tmp/gk/sudo.pk.error; then
 			err_exit1 "$(tail -n 3 /tmp/gk/sudo.pk.error)"
 		else
-			sed -E -n -i '/no authorization|Gtk-WARNING|No protocol specified/!p' /tmp/gk/sudo.pk.error
-			sed -E -n -i '/assertion|isPrimaryInstance|Initializing|QDir/!p' /tmp/gk/sudo.pk.error
+			sed -E -n -i '/no authorization|WARNING|No protocol specified|ToQuit/!p' /tmp/gk/sudo.pk.error
+			sed -E -n -i '/assertion|isPrimaryInstance|Initializing|QDir|usershare/!p' /tmp/gk/sudo.pk.error
 			err_exit1 "Error! if cryptic, possibly from unclean exit of child process
  $(cat /tmp/gk/sudo.pk.error)"
 		fi
 	fi
 else  # succeeded, but check errors/warnings
+	restore_kscrn
 	if [[ -s /tmp/gk/sudo.pk.error ]]; then
 		#  Filter some normally superfluous warnings from stderr/stdout
 		tail -n 2 /tmp/gk/sudo.pk.error > /tmp/gk/parsed-error 
-		if ! grep -E 'exiting|assertion|Bind on socket|isPrimaryInstance|Gtk-WARNING|kdeinit5|Failed to connect|Initializing|QDir' /tmp/gk/parsed-error; then
+		if ! grep -E 'uninitialized|exiting|assertion|Bind on socket|isPrimaryInstance|WARNING|kdeinit5|Failed to connect|Initializing|QDir|ToQuit|net usershare' /tmp/gk/parsed-error; then
 			#sed -i '/^[[:space:]]*$/d' /tmp/gk/sudo.pk.error
-			sed -E -n -i '/no authorization|Gtk-WARNING|No protocol specified/!p' /tmp/gk/sudo.pk.error
-			sed -E -n -i '/assertion|isPrimaryInstance|Initializing|QDir/!p' /tmp/gk/sudo.pk.error
+			sed -E -n -i '/no authorization|No protocol specified|ToQuit|WARNING|usershare info/!p' /tmp/gk/sudo.pk.error
+			sed -E -n -i '/uninitialized|assertion|isPrimaryInstance|Initializing|QDir/!p' /tmp/gk/sudo.pk.error
 			err_len=$(wc -l < /tmp/gk/sudo.pk.error)
 			if [[ "$err_len" -gt 5 ]]; then
 				zenity --warning --title="gksudo-pk Warning" --text="$(head -n 3 /tmp/gk/sudo.pk.error)
@@ -154,11 +162,6 @@ rm $xauth_gksudo 2> /dev/null
 rm $passwdkey_script 2> /dev/null
 rm /tmp/gk/sudo.pk.error 2> /dev/null
 if [[ -d "$as_usr_rundir" ]]; then
-	if [[ -f "$as_usr_rundir/pids" ]]; then
-		read dbus_pid < $as_usr_rundir/pids
-		kill $dbus_pid 2> /dev/null  # Try to kill some orphan dbus-daemons, since not dbus-run-session
-		rm $as_usr_rundir/pids
-	fi
 	umount "$as_usr_rundir/gvfs" 2> /dev/null
 	umount "$as_usr_rundir/doc" 2> /dev/null
 	rm -R $as_usr_rundir
