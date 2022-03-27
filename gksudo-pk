@@ -39,29 +39,29 @@ NEVER_AUTH_LIST="kill pkill su rm chmod chown"
 ##=================================================================================##
 
 err_exit1 () {
-   if ! (zenity --warning --title="gksudo-pk Error" --text="$*" --no-wrap --no-markup 2>/dev/null); then
-       sed 's^\\n^^g' <<< "$*"  # print error without zenity \n format
-   fi
-   exit 1
+	if ! (zenity --warning --title="gksudo-pk Error" --text="$*" --no-wrap --no-markup 2>/dev/null); then
+		sed 's^\\n^^g' <<< "$*"  # print error without zenity \n format
+	fi
+	exit 1
 }
 sudo_znty () {
-   if ! sudo -A "$@" > /dev/null 2>/tmp/gk/sudo-error; then
-	if grep "3 incorrect password attempts" /tmp/gk/sudo-error; then
-		err_exit1 "STOP!  No valid password for ${USER} 
+	if ! sudo -A "$@" > /dev/null 2>/tmp/gk/sudo-error; then
+		if grep "3 incorrect password attempts" /tmp/gk/sudo-error; then
+			err_exit1 "STOP!  No valid password for ${USER} 
  after multiple attempts"
-   	elif grep "not in the sudoers file" /tmp/gk/sudo-error; then
-		err_exit1 "STOP! User \"${USER}\" has no sudo privileges, 
+		elif grep "not in the sudoers file" /tmp/gk/sudo-error; then
+			err_exit1 "STOP! User \"${USER}\" has no sudo privileges, 
  which gksudo-pk requires."
-   	fi
-   fi
+		fi
+	fi
 }
 is_cmd_in_list () {
-   while [ -n "$1" ]
-   do
-        [[ $cmd_minus_path  = "${1}" ]] &&  return 0
-        shift
-   done
-   return 1
+	while [ -n "$1" ]
+	do
+		[[ $cmd_minus_path  = "${1}" ]] &&  return 0
+		shift
+	done
+	return 1
 }
 
 [[ ! -d /tmp/gk ]] && (mkdir -m0777 /tmp/gk)  # avoid sticky bit issues if su before running
@@ -70,8 +70,8 @@ if [[ ! -e /bin/zenity ]]; then
 	exit 1
 fi
 if [[ ! -f /tmp/gk/sudo-error ]]; then
-      touch /tmp/gk/sudo-error 
-      chmod 0666 /tmp/gk/sudo-error
+	touch /tmp/gk/sudo-error 
+	chmod 0666 /tmp/gk/sudo-error
 fi
 USER=$(whoami)   # in case odd "su" invocation to root. Force to be the same.
 usr_home=$(eval echo "~${USER}")   
@@ -82,29 +82,29 @@ chmod 0777 /tmp/gk/zenity-sudo-passwd
 export SUDO_ASKPASS="/tmp/gk/zenity-sudo-passwd"
 [[ -z "$DISPLAY" ]] && export DISPLAY=$(ps -e e | grep -q 'Xorg' |  sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | tail -1)
 if [[ -z "$XDG_RUNTIME_DIR" ]]; then
-      XDG_RUNTIME_DIR=/tmp/gk/runtime-gk-$USER 
-      [[ ! -d "$XDG_RUNTIME_DIR" ]] && mkdir -m0700 $XDG_RUNTIME_DIR
+	XDG_RUNTIME_DIR=/tmp/gk/runtime-gk-$USER 
+	[[ ! -d "$XDG_RUNTIME_DIR" ]] && mkdir -m0700 $XDG_RUNTIME_DIR
 fi
 if [[ $XDG_SESSION_TYPE = "wayland" ]] || [ ! -z "$WAYLAND_DISPLAY" ]; then   # Session is Wayland
-      if [[ -z "$wayland_socket" ]] ; then  # Is top level (not nested)
+	if [[ -z "$wayland_socket" ]] ; then  # Is top level (not nested)
 		orig_xdg_rundir=$XDG_RUNTIME_DIR
-      ## For local (script) use, set WAYLAND_DISPLAY to the full path, but not sure if already done
-            if [[ ! -z "$WAYLAND_DISPLAY" ]]; then
-                  wd_no_path=${WAYLAND_DISPLAY##*/}
-                  WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/"$wd_no_path  ## Sets to full path
-            else
-                  WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/wayland-0"
-            fi 
-            wayland_socket=$WAYLAND_DISPLAY  # $wayland_socket and $orig_xdg_rundir are retained in case nesting
-      else
-            WAYLAND_DISPLAY=$wayland_socket # Temporary, allows Zenity early access to display if nested gksudo-pk used
-      fi
-fi  
+		## For local (script) use, set WAYLAND_DISPLAY to the full path, but not sure if already done
+		if [[ ! -z "$WAYLAND_DISPLAY" ]]; then
+			wd_no_path=${WAYLAND_DISPLAY##*/}
+			WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/"$wd_no_path  ## Sets to full path
+		else
+			WAYLAND_DISPLAY=$XDG_RUNTIME_DIR"/wayland-0"
+		fi
+		wayland_socket=$WAYLAND_DISPLAY  # $wayland_socket and $orig_xdg_rundir are retained in case nesting
+	else
+		WAYLAND_DISPLAY=$wayland_socket # Temporary, allows Zenity early access to display if nested gksudo-pk used
+	fi
+fi
 as_user="root"
 while :   # Deal with legacy gksudo options, all but --user|-u are stripped/ignored
 do
 	case "$1" in
-	-u | --user) 	# Pass the following username to pkexec
+	-u | --user)    # Pass the following username to pkexec
 		as_user=$2
 		shift 2
 		;;
@@ -112,12 +112,12 @@ do
 		shift 2
 		;;
 	
-	-* | --*)   	# All other options only 1 shift needed to erase
+	-* | --*)    # All other options only 1 shift needed to erase
 		shift
 		;; 
-	 *)			# Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
+	 *)          # Remaining commandline conditionally passed to pkexec with passwd-env|nopasswd-env
 		break
-		;;	
+		;;
 	esac
 done
 
