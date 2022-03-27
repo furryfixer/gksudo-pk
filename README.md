@@ -2,7 +2,7 @@
 ### gksudo-pk [-u | --user \<user\>] \<command\>
 #### gksudo [-u | --user \<user\>] \<command\>
 #### gksu [-u | --user \<user\>] \<command\>
-A drop-in replacement for **gksu** and **gksudo**, with fewer options. **RECENTLY REWRITTEN FOR WAYLAND** as well as for X11. Gksudo-pk is a simple bash script. **Pkexec** is used to launch graphical programs as root, or AS ANOTHER USER. It does not use xhost, or call xauth directly. This script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the display server. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma (Xorg and Wayland), XFCE, MATE, GNOME (Xorg and Wayland), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems.  Works for **gnome-terminal**, **konsole**, **nautilus**, **dolphin** and most GUI text editors in both Wayland and Xorg. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
+A drop-in replacement for **gksu** and **gksudo**, with fewer options. **WOKS FOR WAYLAND** as well as for X11. Updated in March 2022. Gksudo-pk is a simple bash script. **Pkexec** is used to launch graphical programs as root, or AS ANOTHER USER. It does call xauth directly, or use xhost for X11, but xhost is required if wayland. This script is **NOT SECURE** by modern standards, although **it will always send a warning notification** to the display server. Use is not recommended on multiple networked machines, with ssh, or unless behind a firewall. Convenience is attained at the expense of security. **Use at YOUR OWN RISK**. Tested and hopefully works in multiple desktop environments, including **KDE Plasma (Xorg and Wayland), XFCE, MATE, GNOME (Xorg and Wayland), LXQT**. Works in both **systemd (Arch)** and **non-systemd (Void)** systems.  Works for **gnome-terminal**, **konsole**, **nautilus**, **dolphin** and most GUI text editors in both Wayland and Xorg. An important feature (and vulnerability) is that the administrator may assign programs to one of two strings within the script:
 
 - **NOPASSWD_LIST: These programs may be run without password authentication (if Sudoer).**
 - **NEVER_AUTH_LIST: These programs are prohibited entirely from launching with gksudo-pk.**
@@ -18,7 +18,7 @@ Only the **--user | -u** options are actually used, and as with sudo, may be omi
 
 ## Applicability
 gksudo-pk is designed to be fairly universal, but has not been extensively tested. Desktop environments tested so far include:
-**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.26, LXQT 1.0, Gnome 40 (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. Gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**. I3 and Sway have been poorly tested, but should work if a polkit agent is running.
+**XFCE 4.16, KDE Plasma 5 (Wayland and Xorg), MATE 1.26, LXQT 1.0, Gnome 40+ (Wayland and Xorg)**. Both **systemd** (Arch) and **non-systemd** (Void) distributions have been tested. Gksudo-pk works with the following display managers: **none(startx), xdm, slim, lxdm, lightdm, gdm**. I3 and Sway have been poorly tested, but should work if a polkit agent is running.
 
 ## Details
 The invoking user **MUST be a SUDOER**, either as an individual, or by group membership (often "wheel" or "sudo"). The **-u | --user** option allows gksudo-pk to run a program as **ANY STANDARD USER, as well as root**.  
@@ -51,6 +51,6 @@ A common warning complains about "inability to register with accessibility bus" 
 
 Temporary $XDG_RUNTIME_DIR directories are created separately from the standard ones.
 
-Gksudo-pk, or it's gksu/gksudo link, can be used in .desktop files or custom actions, allowing the elevation of privileges with a right mouse click or menu selection from within most common file managers. You will be warned when doing this. In single or 2-3 user situations, this can be very convenient for EXAMINING protected files or directories, but should not be abused by indiscriminately (or accidentaly) deleting or modifying them with gksudo-pk.  Never elevate to superuser when there is no need.
+A companion script, "filemanager-gksudo-pk" is available in a separate repository. This leverages gksudo-pk to provide a menu option allowing the elevation of privileges from within most common file managers. You will be warned when doing this. In single or 2-3 user situations, this can be very convenient for EXAMINING protected files or directories, but should not be abused by indiscriminately (or accidentaly) deleting or modifying them with gksudo-pk.  Never elevate to superuser when there is no need.
 
 The script relies heavily on creating small temporary files in the /tmp directory.  Obviously, it will run faster and be easier on drives if /tmp is a tmpfs in RAM.
