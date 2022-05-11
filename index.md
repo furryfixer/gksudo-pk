@@ -45,6 +45,10 @@ It is not difficult to install this script, but the author does not encourage "p
 - chmod 0744 /usr/local/bin/gksudo-su
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksudo   # recommended to replace "gksudo"
 - ln -s /usr/local/bin/gksudo-pk /usr/local/bin/gksu     # recommended to replace "gksu"
+
+Optionally install filemanager-gksudo-pk, from here:
+
+https://github.com/furryfixer/filemanager-gksudo-pk
  
 ## Notes
 A common warning complains about "inability to register with accessibility bus" or similar.  This warning can be silenced by appending **NO_AT_BRIDGE=1** to **/etc/environment**.
