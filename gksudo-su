@@ -15,11 +15,6 @@ err_exit1 () {
 	rm $passwdkey_script 2> /dev/null
 	rm /tmp/gk/sudo.pk.error 2> /dev/null
 	if [[ -d "$as_usr_rundir" ]]; then
-		if [[ -f "$as_usr_rundir/pids" ]]; then
-			read dbus_pid < $as_usr_rundir/pids
-			kill $dbus_pid 2> /dev/null  # Try to kill some orphan dbus-daemons, since not dbus-run-session
-			rm $as_usr_rundir/pids
-		fi
 		umount "$as_usr_rundir/gvfs" 2> /dev/null
 		umount "$as_usr_rundir/doc" 2> /dev/null
 		rm -R $as_usr_rundir
