@@ -131,7 +131,7 @@ if ! (id "$as_user" >/dev/null 2>&1); then
 	err_exit1 "STOP! \" "$as_user"\" is not a known username 
  on the local system"
 fi
-#   Our new $1 should be the command to pass to pkexec, but first we need to 
+#   Our new $@ should be the command to pass to pkexec, but first we need to 
 #   compare with commands in $NEVER_AUTH_LIST and $NOPASSWORD_LIST above. We must strip full path
 #   if present only for the purpose of this comparison.  		
 cmd_minus_path=${1##*/}       # Strips  /usr/bin/.../  prefixes
@@ -140,7 +140,7 @@ is_cmd_in_list ${NEVER_AUTH_LIST} && err_exit1 "STOP! gksudo-pk execution of ${1
  prevented by local policy!"
 if [[ "$cmd_minus_path" = "mate-terminal" ]]; then
 	set -- "$@" "--disable-factory" # Force mate-terminal to start new PID
-elif [[ "$cmd_minus_path" = "gnome-terminal" ]] && ( ! grep -q 'gnome-terminal.*--wait' <<< $1 ); then
+elif [[ "$cmd_minus_path" = "gnome-terminal" ]] && ( ! grep -q 'gnome-terminal.*--wait' <<< $@ ); then
 	set -- "$@" "--wait" # Force gnome-terminal to use --wait option
 fi
 if [[ ! -z $WAYLAND_DISPLAY ]] && [[ ! `xhost | grep "localuser:$as_user"` ]]; then
