@@ -1,5 +1,6 @@
 #!/bin/bash
 ####################################################################################
+# This Version 1 is now deprecated! See Version 2
 # GKSUDO-SU This script is NOT to be run independently and will fail if tried.
 #    This secondary script is called by GKSUDO-PK for actions requiring elevated 
 #    (sudo) privileges. Required variable assignments are passed in the 
