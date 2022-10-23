@@ -1,6 +1,6 @@
 #! /bin/bash
 ####################################################################################
-# This Version 1 is now deprecated! See Version 2
+# This Version is now deprecated! See gksudo2
 # GKSUDO-PK (drop-in replacement for gksudo, gksu) with pkexec, for X11 or
 #            Wayland. GPLv3 license, by William Rueger (furryfixer) 
 # Requires: Zenity, sudo, polkit, and elogind or systemd dependencies.
