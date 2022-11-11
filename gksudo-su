@@ -103,10 +103,10 @@ if [[ $XDG_CURRENT_DESKTOP = "KDE" ]]; then
 	if [[ $as_usr_kscrn != $active_kscrn ]] && [[ ! -L $as_usr_kscrn ]]; then
 		if [[ -d $as_usr_kscrn ]]; then
 			[[ ! -d $as_usr_kscrn"0" ]] && mv $as_usr_kscrn $as_usr_kscrn"0"
-			chown $as_usr $as_usr_kscrn"0"
+			chown $as_user $as_usr_kscrn"0"
 		fi
 		ln -s $active_kscrn $as_usr_kscrn
-		chown  $as_usr $as_usr_kscrn
+		chown  $as_user $as_usr_kscrn
 	fi
 	echo "   KDE_SESSION_VERSION=5
    KDE_FULL_SESSION=true" >> $passwdkey_script
